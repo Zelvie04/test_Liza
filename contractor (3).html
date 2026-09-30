@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f3d2e">
+<title>DOMOS — Приложение мастера</title>
+<style>
+:root{
+  --green-dark:#0f3d2e;--green:#1a5a44;--green-mid:#2d8b6f;
+  --green-light:#e8f1ec;--bg:#f4f6f4;--card:#fff;
+  --text:#1a2b24;--muted:#7a8781;--border:#e6eae8;
+  --navy:#16324a;--warn:#f59e0b;--danger:#dc2626;--ok:#059669;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#0a0a0a;color:var(--text);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+
+/* Скрыть все скроллбары */
+*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+*{scrollbar-width:none;-ms-overflow-style:none}
+
+@media (min-width:560px){
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;
+    background:radial-gradient(circle at 50% 0%,#1a3a2e 0%,#0a0a0a 70%)}
+  .phone-frame{width:390px;height:840px;background:#000;border-radius:44px;
+    padding:12px;box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 2px #333;position:relative}
+  .phone-frame::after{content:'';position:absolute;top:22px;left:50%;
+    transform:translateX(-50%);width:110px;height:26px;background:#000;
+    border-radius:0 0 16px 16px;z-index:100;pointer-events:none}
+  .phone-screen{width:100%;height:100%;background:var(--bg);border-radius:34px;
+    overflow:hidden;position:relative;display:flex;flex-direction:column}
+}
+@media (max-width:559px){
+  .phone-frame{width:100%;height:100dvh}
+  .phone-screen{width:100%;height:100%;background:var(--bg);overflow:hidden;
+    position:relative;display:flex;flex-direction:column}
+}
+
+.screen{position:absolute;inset:0;display:none;flex-direction:column;
+  background:var(--bg);overflow:hidden}
+.screen.active{display:flex;animation:slideIn .22s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+
+.status-bar{display:flex;justify-content:space-between;align-items:center;
+  padding:14px 22px 6px;font-size:13px;font-weight:600;color:var(--text);
+  flex-shrink:0;position:relative;z-index:10}
+.status-bar .right{display:flex;gap:4px;font-size:12px}
+
+.top-bar{display:flex;align-items:center;gap:10px;padding:6px 18px 14px;
+  flex-shrink:0;background:transparent}
+.top-bar .back{width:34px;height:34px;border-radius:50%;background:#fff;
+  border:none;display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06);
+  color:var(--text);flex-shrink:0}
+.top-bar .back:active{transform:scale(.94)}
+.top-bar h1{font-size:19px;font-weight:700;letter-spacing:-.3px;flex:1}
+.top-bar .action{font-size:14px;color:var(--green-mid);font-weight:600;
+  background:none;border:none;cursor:pointer;font-family:inherit}
+
+.content{flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:0 18px 100px;-webkit-overflow-scrolling:touch}
+
+.tab-bar{position:absolute;bottom:0;left:0;right:0;background:#fff;
+  border-top:1px solid var(--border);display:flex;justify-content:space-around;
+  padding:8px 0 22px;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.03)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 8px;border-radius:10px;cursor:pointer;flex:1;
+  transition:transform .12s;background:none;border:none;font-family:inherit}
+.tab:active{transform:scale(.92)}
+.tab .ti{font-size:20px;line-height:1;color:#9aa39f;transition:color .15s}
+.tab .tl{font-size:10px;font-weight:500;color:#9aa39f}
+.tab.active .ti{color:var(--green-dark)}
+.tab.active .tl{color:var(--green-dark);font-weight:600}
+
+/* LOGIN */
+.login{flex:1;display:flex;flex-direction:column;padding:40px 28px;
+  background:linear-gradient(180deg,#f8f6f1 0%,#e8f1ec 100%);overflow-y:auto}
+.login .logo{font-size:32px;letter-spacing:4px;justify-content:center;
+  display:flex;margin-bottom:36px;align-items:center;gap:6px;color:var(--navy);font-weight:800}
+.login .logo .lm{width:32px;height:32px}
+.login .logo .lm svg{width:100%;height:100%}
+.login h2{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px;text-align:center}
+.login .sub{color:var(--muted);margin-bottom:24px;font-size:13.5px;text-align:center;line-height:1.5}
+.role-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}
+.role-btn{padding:14px 6px;border-radius:14px;background:#fff;
+  border:1.5px solid var(--border);cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:all .15s;color:var(--text)}
+.role-btn .ri{font-size:24px;line-height:1}
+.role-btn .rl{font-size:11.5px;font-weight:600;text-align:center;line-height:1.2}
+.role-btn.active{background:var(--green-dark);color:#fff;border-color:var(--green-dark);
+  box-shadow:0 8px 20px rgba(15,61,46,.25)}
+.role-btn:active{transform:scale(.97)}
+.form-label{font-size:13px;font-weight:600;margin-bottom:8px;display:block}
+.form-input{width:100%;padding:14px 16px;border:1.5px solid var(--border);
+  border-radius:12px;font-size:15px;font-family:inherit;background:#fff;
+  color:var(--text);transition:border .15s}
+.form-input:focus{outline:none;border-color:var(--green-mid)}
+.code-input{display:flex;gap:8px;margin:16px 0 20px}
+.code-box{flex:1;height:52px;border:1.5px solid var(--border);border-radius:12px;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;color:var(--green-dark)}
+.code-box.filled{border-color:var(--green-mid)}
+.code-box.active{border-color:var(--green-dark);box-shadow:0 0 0 3px var(--green-light)}
+.hint-box{background:#fff;border-radius:12px;padding:12px 14px;
+  border:1px dashed #d5ddd9;margin-top:16px;font-size:12px;color:var(--muted);line-height:1.6}
+.hint-box b{color:var(--green-dark)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 22px;border-radius:14px;border:none;font-size:15px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .12s;text-decoration:none;width:100%}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--green-dark);color:#fff}
+.btn-outline{background:#fff;color:var(--green-dark);border:1.5px solid #d5ddd9}
+
+/* CARD */
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;
+  box-shadow:0 2px 10px rgba(15,61,46,.05);border:1px solid #eef1ef}
+.section-title{font-size:12px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;margin:20px 0 10px}
+.section-title:first-child{margin-top:4px}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;background:var(--green-light);color:var(--green)}
+.badge.warn{background:#fef3c7;color:#92400e}
+.badge.danger{background:#fee2e2;color:#991b1b}
+.badge.ok{background:#d1fae5;color:#065f46}
+.badge.gray{background:#f1f3f2;color:#5a6b64}
+.badge.blue{background:#dbeafe;color:#1e40af}
+
+/* LAYOUT HELPERS */
+.row{display:flex;align-items:center;gap:10px}
+.row.between{justify-content:space-between}
+.meta{font-size:13px;color:var(--muted);line-height:1.5}
+.meta.small{font-size:12px}
+.photo{width:100%;border-radius:12px;object-fit:cover;display:block}
+.icon-circle{width:44px;height:44px;border-radius:50%;background:var(--green-light);
+  color:var(--green);display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0}
+.icon-circle.sm{width:36px;height:36px;font-size:16px}
+.avatar{width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#f4a261,#e76f51);display:flex;align-items:center;
+  justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0}
+
+/* FORM */
+.form-textarea{width:100%;padding:14px 16px;border:1.5px solid var(--border);
+  border-radius:12px;font-size:15px;font-family:inherit;background:#fff;
+  color:var(--text);min-height:90px;resize:none}
+.form-textarea:focus{outline:none;border-color:var(--green-mid)}
+.upload-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.upload-btn{padding:18px 8px;border:1.5px dashed #d5ddd9;border-radius:12px;
+  background:#fafbfa;display:flex;flex-direction:column;align-items:center;gap:6px;
+  font-size:12px;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s}
+.upload-btn:active{border-color:var(--green-mid);background:var(--green-light)}
+.upload-btn .ui{font-size:22px}
+
+/* PROGRESS */
+.progress{height:8px;background:#eef1ef;border-radius:4px;overflow:hidden;margin:10px 0}
+.progress-bar{height:100%;background:var(--green-mid);border-radius:4px}
+
+/* PROFILE */
+.profile-head{display:flex;flex-direction:column;align-items:center;padding:12px 0 24px}
+.profile-head h2{font-size:20px;font-weight:700}
+.profile-head .meta{margin-top:4px}
+.list-row{display:flex;align-items:center;gap:14px;padding:14px 0;
+  border-bottom:1px solid var(--border);cursor:pointer}
+.list-row:last-child{border-bottom:none}
+.list-row .body{flex:1}
+.list-row .title{font-size:14.5px;font-weight:500}
+.list-row .sub{font-size:12.5px;color:var(--muted);margin-top:1px}
+.list-row .arrow{color:#c4ccc9;font-size:16px}
+.toggle{width:42px;height:24px;border-radius:12px;background:#d5ddd9;
+  position:relative;transition:background .15s;flex-shrink:0;cursor:pointer}
+.toggle::after{content:'';position:absolute;left:2px;top:2px;width:20px;height:20px;
+  background:#fff;border-radius:50%;transition:transform .15s;
+  box-shadow:0 2px 4px rgba(0,0,0,.1)}
+.toggle.on{background:var(--green-dark)}
+.toggle.on::after{transform:translateX(18px)}
+
+/* TOAST */
+.toast{position:fixed;top:50px;left:50%;transform:translateX(-50%);
+  background:var(--green-dark);color:#fff;padding:12px 20px;border-radius:12px;
+  font-size:14px;font-weight:500;z-index:99999;opacity:0;pointer-events:none;
+  transition:opacity .2s;white-space:nowrap;max-width:90%}
+.toast.show{opacity:1}
+@media (min-width:560px){
+  .toast{position:absolute;top:50px}
+}
+
+/* CHAT */
+.chat-wrap{flex:1;overflow-y:auto;padding:12px 16px 20px;
+  background:#f4f6f4;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:82%;padding:11px 14px;border-radius:16px;font-size:14px;
+  line-height:1.45;animation:msgIn .2s ease;word-wrap:break-word}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.ai{background:#fff;border:1px solid #eef1ef;color:var(--text);
+  border-bottom-left-radius:6px;align-self:flex-start;
+  box-shadow:0 1px 4px rgba(15,61,46,.05)}
+.msg.me{background:var(--green-dark);color:#fff;
+  border-bottom-right-radius:6px;align-self:flex-end}
+.msg.sys{background:#eef1ef;color:var(--muted);font-size:12px;
+  align-self:center;text-align:center;max-width:90%;border-radius:10px;padding:8px 12px}
+.msg .ai-label{display:flex;align-items:center;gap:6px;font-size:11px;
+  font-weight:700;color:var(--green-mid);text-transform:uppercase;
+  letter-spacing:.4px;margin-bottom:6px}
+.msg .ai-label .dot{width:6px;height:6px;border-radius:50%;
+  background:#2ec4a0;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.typing{display:flex;gap:4px;padding:12px 16px;background:#fff;
+  border-radius:16px;border-bottom-left-radius:6px;align-self:flex-start;
+  border:1px solid #eef1ef;width:60px}
+.typing span{width:7px;height:7px;border-radius:50%;background:#c4ccc9;
+  animation:typing 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.5}
+  30%{transform:translateY(-4px);opacity:1}}
+.qr-bar{flex-shrink:0;background:#f4f6f4;padding:6px 12px 10px;
+  display:flex;gap:8px;overflow-x:auto;overflow-y:hidden}
+.qr-bar:empty{display:none}
+.qr-bar .qr{padding:8px 14px;border-radius:20px;background:#fff;
+  border:1.5px solid var(--green-mid);font-size:13px;cursor:pointer;
+  font-family:inherit;color:var(--green-dark);font-weight:600;
+  white-space:nowrap;flex-shrink:0;transition:all .12s}
+.qr-bar .qr:active{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
+.chat-input-bar{flex-shrink:0;padding:10px 14px 20px;
+  background:#fff;border-top:1px solid var(--border);display:flex;gap:8px;
+  align-items:center;z-index:50}
+.chat-input-bar input{flex:1;padding:11px 16px;border-radius:22px;
+  border:1.5px solid var(--border);font-size:14px;font-family:inherit;
+  background:#f4f6f4;color:var(--text);outline:none}
+.chat-input-bar input:focus{border-color:var(--green-mid)}
+.chat-input-bar .send{width:40px;height:40px;border-radius:50%;border:none;
+  background:var(--green-dark);color:#fff;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.chat-row{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;align-items:center}
+.chat-row:last-child{border-bottom:none}
+.chat-body{flex:1;min-width:0}
+.chat-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.chat-preview{font-size:13px;color:var(--muted);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.chat-time{font-size:11px;color:var(--muted);flex-shrink:0}
+.chat-unread{background:var(--green-dark);color:#fff;font-size:11px;
+  padding:2px 7px;border-radius:10px;font-weight:600;margin-top:4px;display:inline-block}
+.contractor-badge{background:linear-gradient(135deg,#0f3d2e,#1a5a44);color:#fff;
+  padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;font-size:12px}
+.contractor-badge .c-avatar{width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#f4a261,#e76f51);display:flex;
+  align-items:center;justify-content:center;font-weight:700;font-size:12px;
+  color:#fff;flex-shrink:0}
+.contractor-badge .c-info{flex:1;min-width:0}
+.contractor-badge .c-name{font-weight:700;font-size:13px;line-height:1.2}
+.contractor-badge .c-status{font-size:11px;opacity:.85;margin-top:2px;
+  display:flex;align-items:center;gap:4px}
+.contractor-badge .c-status .on{width:6px;height:6px;border-radius:50%;
+  background:#2ec4a0;animation:pulse 1.5s infinite}
+.chat-sys-info{background:rgba(46,196,160,.08);border:1px solid rgba(46,196,160,.2);
+  border-radius:12px;padding:10px 12px;font-size:12px;color:var(--green-dark);
+  align-self:stretch;text-align:center;line-height:1.5}
+
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:6px;background:#eef1ef;border-radius:12px;
+  padding:4px;margin-bottom:14px;overflow-x:auto}
+.filter-tabs button{flex:1;min-width:60px;background:transparent;border:none;
+  color:var(--muted);font-family:inherit;font-size:12px;font-weight:600;
+  padding:8px 4px;border-radius:9px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-tabs button.active{background:#fff;color:var(--green-dark);
+  box-shadow:0 2px 6px rgba(15,61,46,.08)}
+
+/* HERO HEADER (для главного экрана) */
+.hero-header{background:linear-gradient(135deg,#0f3d2e,#1a5a44);color:#fff;
+  padding:50px 20px 20px;flex-shrink:0}
+.hero-header .greet{font-size:12px;opacity:.8}
+.hero-header h1{font-size:20px;font-weight:700;margin-top:2px}
+.hero-header .role{font-size:12px;opacity:.8;margin-top:4px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.hero-stat{background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center}
+.hero-stat b{display:block;font-size:20px;font-weight:700;line-height:1}
+.hero-stat span{font-size:10px;opacity:.8;margin-top:4px;display:block}
+
+/* TASK CARD */
+.task-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;
+  border:1px solid #eef1ef;box-shadow:0 2px 10px rgba(15,61,46,.05);
+  cursor:pointer;transition:transform .12s;border-left:4px solid #2ec4a0}
+.task-card:active{transform:scale(.99)}
+.task-card.critical{border-left-color:#dc2626}
+.task-card.high{border-left-color:#f59e0b}
+.task-card.normal{border-left-color:#2ec4a0}
+.task-card.done{border-left-color:#9aa39f;opacity:.7}
+.task-card .t-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.task-card .t-title{font-size:14.5px;font-weight:700;color:var(--text);
+  flex:1;line-height:1.3;padding-right:8px}
+.task-card .t-sla{background:#fef3c7;color:#92400e;padding:3px 8px;
+  border-radius:6px;font-weight:700;font-size:10px;flex-shrink:0}
+.task-card .t-sla.crit{background:#fee2e2;color:#991b1b}
+.task-card .t-sla.ok{background:#d1fae5;color:#065f46}
+.task-card .t-addr{font-size:12px;color:var(--muted);margin-bottom:8px}
+.task-card .t-meta{display:flex;gap:10px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+
+/* CALENDAR */
+.cal-day{display:flex;gap:12px;margin-bottom:10px}
+.cal-time{width:70px;font-size:12px;font-weight:700;color:var(--text);flex-shrink:0;padding-top:4px}
+.cal-task{flex:1;background:#fff;border-radius:12px;padding:12px;
+  border-left:3px solid #2ec4a0;box-shadow:0 2px 8px rgba(15,61,46,.05);cursor:pointer}
+.cal-task.crit{border-left-color:#dc2626}
+.cal-task.high{border-left-color:#f59e0b}
+.cal-task .ct-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.cal-task .ct-meta{font-size:11px;color:var(--muted)}
+
+/* INCOME */
+.income-hero{background:linear-gradient(135deg,#0f3d2e,#1a5a44);color:#fff;
+  border-radius:16px;padding:20px;margin-bottom:16px}
+.income-hero .label{font-size:11px;opacity:.85;text-transform:uppercase;
+  letter-spacing:.4px;font-weight:700;margin-bottom:6px}
+.income-hero .amount{font-size:32px;font-weight:800;letter-spacing:-1px;
+  line-height:1;margin-bottom:8px}
+.income-hero .delta{font-size:12px;opacity:.9}
+
+/* REVIEW */
+.review-row{padding:12px 0;border-bottom:1px solid var(--border)}
+.review-row:last-child{border-bottom:none}
+.review-head{display:flex;justify-content:space-between;margin-bottom:4px}
+.review-name{font-size:13px;font-weight:600}
+.review-text{font-size:12.5px;color:var(--muted);line-height:1.5}
+
+/* AI FAB */
+.ai-fab{position:fixed;right:18px;bottom:100px;width:58px;height:58px;
+  border-radius:50%;border:none;cursor:pointer;z-index:400;
+  background:linear-gradient(135deg,#16324a 0%,#2ec4a0 100%);
+  box-shadow:0 8px 24px rgba(46,196,160,.45),0 0 0 4px rgba(46,196,160,.15);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-size:26px;transition:transform .2s}
+@media (min-width:560px){.ai-fab{position:absolute}}
+.ai-fab:active{transform:scale(.92)}
+.ai-fab::after{content:'';position:absolute;top:2px;right:2px;width:12px;
+  height:12px;border-radius:50%;background:#2ec4a0;border:2px solid #fff}
+
+/* SHEET */
+.sheet-overlay{position:fixed;inset:0;background:rgba(15,61,46,.5);
+  backdrop-filter:blur(4px);z-index:9000;display:none;
+  align-items:flex-end;justify-content:center}
+@media (min-width:560px){.sheet-overlay{position:absolute}}
+.sheet-overlay.show{display:flex}
+.sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;
+  padding:20px 22px 30px;max-height:85%;overflow-y:auto;
+  animation:sheetUp .25s ease;position:relative}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.sheet::before{content:'';position:absolute;top:8px;left:50%;
+  transform:translateX(-50%);width:36px;height:4px;background:#d5ddd9;border-radius:2px}
+</style>
+</head>
+<body><div class="phone-frame">
+<div class="phone-screen" id="appRoot">
+
+<!-- ============ ЭКРАН ВХОДА ============ -->
+<div class="screen active" id="s-login">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="login">
+    <div class="logo">
+      <span class="lm"><svg viewBox="0 0 100 100"><defs><linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#16324a"/><stop offset="45%" stop-color="#0f6b6b"/><stop offset="100%" stop-color="#2ec4a0"/></linearGradient></defs><path d="M50 4 L90 28 Q97 32 97 40 L97 84 Q97 96 85 96 L15 96 Q3 96 3 84 L3 40 Q3 32 10 28 Z" fill="url(#lg)"/><path d="M50 30 L76 48 Q78 50 78 53 L78 74 Q78 78 74 78 L62 78 L62 62 L38 62 L38 78 L26 78 Q22 78 22 74 L22 53 Q22 50 24 48 Z" fill="#fff"/></svg></span>
+      <span>DOMOS</span>
+    </div>
+    <h2>Вход в систему</h2>
+    <p class="sub">Выберите роль и введите свой код</p>
+
+    <div class="role-picker">
+      <button class="role-btn" data-role="resident" onclick="pickRole(this,'resident')">
+        <span class="ri">👤</span><span class="rl">Житель</span>
+      </button>
+      <button class="role-btn" data-role="uk" onclick="pickRole(this,'uk')">
+        <span class="ri">🏢</span><span class="rl">УК</span>
+      </button>
+      <button class="role-btn active" data-role="contractor" onclick="pickRole(this,'contractor')">
+        <span class="ri">👷</span><span class="rl">Подрядчик</span>
+      </button>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label class="form-label">Код доступа</label>
+      <input class="form-input" type="text" id="accessCode" value="9 0 1 2" maxlength="9">
+    </div>
+
+    <div class="code-input">
+      <div class="code-box filled">9</div>
+      <div class="code-box filled">0</div>
+      <div class="code-box filled">1</div>
+      <div class="code-box active">2</div>
+      <div class="code-box"></div>
+      <div class="code-box"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="doLogin()">Войти как подрядчик</button>
+
+    <div class="hint-box">
+      <b>Демо-коды:</b><br>
+      👤 Житель: <b>1234</b><br>
+      🏢 УК: <b>5678</b><br>
+      👷 Подрядчик: <b>9012</b>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ГЛАВНАЯ (ЗАДАЧИ) ============ -->
+<div class="screen" id="c-home">
+  <div class="hero-header">
+    <div class="status-bar" style="color:#fff;padding:0 2px 12px">
+      <span>9:41</span><span class="right">📶 🔋</span>
+    </div>
+    <div class="greet">Добрый день,</div>
+    <h1>Сергей Петров 👷</h1>
+    <div class="role">Электрик · УК Солнечный</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><b>3</b><span>Задачи</span></div>
+      <div class="hero-stat"><b>1</b><span>Срочная</span></div>
+      <div class="hero-stat"><b>4.9</b><span>Рейтинг</span></div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 18px 100px;background:#f4f6f4">
+    <div class="filter-tabs" id="taskFilters">
+      <button class="active" onclick="filterTasks(this,'all')">Все</button>
+      <button onclick="filterTasks(this,'critical')">Срочные</button>
+      <button onclick="filterTasks(this,'today')">Сегодня</button>
+      <button onclick="filterTasks(this,'done')">Завершённые</button>
+    </div>
+
+    <div id="taskList">
+      <div class="task-card critical" data-status="critical" onclick="openTask('kritichno')">
+        <div class="t-head">
+          <div class="t-title">Протечка возле электрощитовой</div>
+          <span class="t-sla crit">30м</span>
+        </div>
+        <div class="t-addr">кв. 312 · 5 этаж · подъезд 3</div>
+        <div class="t-meta"><span>💧 Сантехника</span><span>👤 Анна Иванова</span></div>
+      </div>
+
+      <div class="task-card high" data-status="today" onclick="openTask('light')">
+        <div class="t-head">
+          <div class="t-title">Не работает свет в подъезде</div>
+          <span class="t-sla">4ч</span>
+        </div>
+        <div class="t-addr">подъезд 1 · 3 этаж</div>
+        <div class="t-meta"><span>⚡ Электрика</span><span>👤 Анна Иванова</span></div>
+      </div>
+
+      <div class="task-card normal" data-status="today" onclick="openTask('door')">
+        <div class="t-head">
+          <div class="t-title">Доводчик двери в 4 подъезде</div>
+          <span class="t-sla ok">24ч</span>
+        </div>
+        <div class="t-addr">подъезд 4 · 1 этаж</div>
+        <div class="t-meta"><span>🚪 Двери</span><span>👤 Игорь Смирнов</span></div>
+      </div>
+
+      <div class="task-card done" data-status="done">
+        <div class="t-head">
+          <div class="t-title">Розетка в кв. 245</div>
+          <span class="badge ok" style="font-size:10px">Готово</span>
+        </div>
+        <div class="t-addr">кв. 245 · 3 этаж</div>
+        <div class="t-meta"><span>⚡ Электрика</span><span>⭐ 5</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="showCTab(this,'c-home')"><span class="ti">📋</span><span class="tl">Задачи</span></button>
+    <button class="tab" onclick="showCTab(this,'c-chats')"><span class="ti">💬</span><span class="tl">Чаты</span></button>
+    <button class="tab" onclick="showCTab(this,'c-calendar')"><span class="ti">📅</span><span class="tl">Календарь</span></button>
+    <button class="tab" onclick="showCTab(this,'c-income')"><span class="ti">💰</span><span class="tl">Доход</span></button>
+    <button class="tab" onclick="showCTab(this,'c-profile')"><span class="ti">👤</span><span class="tl">Профиль</span></button>
+  </div>
+</div>
+
+<!-- ============ ЧАТЫ ============ -->
+<div class="screen" id="c-chats">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="top-bar">
+    <h1>Чаты с жильцами</h1>
+  </div>
+  <div class="content" style="padding-top:0">
+    <div class="filter-tabs" id="chatFilters">
+      <button class="active" onclick="filterChats(this,'all')">Все</button>
+      <button onclick="filterChats(this,'new')">Новые</button>
+      <button onclick="filterChats(this,'active')">В работе</button>
+      <button onclick="filterChats(this,'done')">Закрытые</button>
+    </div>
+
+    <div id="chatList">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="chat-row" data-status="active" style="padding:14px" onclick="openResidentChat('kritichno')">
+          <div class="avatar" style="width:44px;height:44px;font-size:15px">А</div>
+          <div class="chat-body">
+            <div class="chat-name">Анна Иванова <span class="badge danger" style="font-size:9px;padding:2px 6px;margin-left:4px">КРИТИЧНО</span></div>
+            <div class="chat-preview">Вода капает с потолка, помогите!</div>
+          </div>
+          <div style="text-align:right">
+            <div class="chat-time">14:18</div>
+            <span class="chat-unread">2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="chat-row" data-status="active" style="padding:14px" onclick="openResidentChat('light')">
+          <div class="avatar" style="width:44px;height:44px;font-size:15px;background:linear-gradient(135deg,#fbbf24,#b45309)">А</div>
+          <div class="chat-body">
+            <div class="chat-name">Анна Иванова</div>
+            <div class="chat-preview">Когда будете со светом?</div>
+          </div>
+          <div class="chat-time">13:42</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="chat-row" data-status="new" style="padding:14px" onclick="openResidentChat('door')">
+          <div class="avatar" style="width:44px;height:44px;font-size:15px;background:linear-gradient(135deg,#3b82f6,#1e40af)">И</div>
+          <div class="chat-body">
+            <div class="chat-name">Игорь Смирнов <span class="badge blue" style="font-size:9px;padding:2px 6px;margin-left:4px">НОВОЕ</span></div>
+            <div class="chat-preview">Дверь в подъезде не закрывается</div>
+          </div>
+          <div class="chat-time">12:15</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="chat-row" data-status="done" style="padding:14px" onclick="openResidentChat('done1')">
+          <div class="avatar" style="width:44px;height:44px;font-size:15px;background:linear-gradient(135deg,#a855f7,#6d28d9)">М</div>
+          <div class="chat-body">
+            <div class="chat-name">Марина Ковалёва <span class="badge ok" style="font-size:9px;padding:2px 6px;margin-left:4px">ГОТОВО</span></div>
+            <div class="chat-preview">Спасибо за оперативность!</div>
+          </div>
+          <div class="chat-time">Вчера</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="chat-row" data-status="done" style="padding:14px" onclick="openResidentChat('done2')">
+          <div class="avatar" style="width:44px;height:44px;font-size:15px;background:linear-gradient(135deg,#ec4899,#be185d)">П</div>
+          <div class="chat-body">
+            <div class="chat-name">Пётр Сидоров <span class="badge ok" style="font-size:9px;padding:2px 6px;margin-left:4px">ГОТОВО</span></div>
+            <div class="chat-preview">Всё работает, спасибо!</div>
+          </div>
+          <div class="chat-time">Пн</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab" onclick="showCTab(this,'c-home')"><span class="ti">📋</span><span class="tl">Задачи</span></button>
+    <button class="tab active" onclick="showCTab(this,'c-chats')"><span class="ti">💬</span><span class="tl">Чаты</span></button>
+    <button class="tab" onclick="showCTab(this,'c-calendar')"><span class="ti">📅</span><span class="tl">Календарь</span></button>
+    <button class="tab" onclick="showCTab(this,'c-income')"><span class="ti">💰</span><span class="tl">Доход</span></button>
+    <button class="tab" onclick="showCTab(this,'c-profile')"><span class="ti">👤</span><span class="tl">Профиль</span></button>
+  </div>
+</div><!-- ============ ДЕТАЛЬНАЯ ЗАДАЧА ============ -->
+<div class="screen" id="c-task">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="top-bar">
+    <button class="back" onclick="goBackToTasks()">←</button>
+    <h1>Задача</h1>
+  </div>
+  <div class="content" style="padding-bottom:140px">
+    <div class="card" style="margin-bottom:16px">
+      <div class="row between" style="margin-bottom:12px">
+        <span class="badge danger" id="taskPriority">КРИТИЧНО</span>
+        <span class="meta small" id="taskSla">SLA 30 мин</span>
+      </div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px" id="taskTitle">Протечка возле электрощитовой</div>
+      <div class="meta" style="margin-bottom:12px" id="taskAddr">кв. 312 · 5 этаж</div>
+      <img class="photo" style="height:160px" id="taskPhoto" src="https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&q=70" alt="">
+    </div>
+
+    <div class="card" style="background:#f0f9f5;border-color:#d1fae5;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:8px">🤖 AI-подсказка</div>
+      <div style="font-size:13px;line-height:1.55;color:#0f3d2e" id="taskAi">Похожая заявка была 14 апреля. Возьмите хомуты и уплотнитель.</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">📷 Фото и видео</div>
+      <div class="upload-row">
+        <button class="upload-btn" onclick="showToast('Загрузка фото...')"><span class="ui">📷</span>Фото</button>
+        <button class="upload-btn" onclick="showToast('Загрузка видео...')"><span class="ui">🎥</span>Видео</button>
+        <button class="upload-btn" onclick="showToast('Запись голоса...')"><span class="ui">🎤</span>Голос</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">💬 Комментарий для УК</div>
+      <textarea class="form-textarea" placeholder="Опишите, что сделали..."></textarea>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="row between" style="padding:6px 0">
+        <span style="font-size:13px">✅ Материалы списаны</span>
+        <span class="badge ok">Готово</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" onclick="showToast('Задача отложена')">Отложить</button>
+      <button class="btn btn-primary" onclick="completeTask()">Завершить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ЧАТ С ЖИЛЬЦОМ ============ -->
+<div class="screen" id="c-resident-chat">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="top-bar" style="padding-bottom:8px">
+    <button class="back" onclick="goBackToChats()">←</button>
+    <h1 id="rcTitle">Анна Иванова</h1>
+    <button class="action" onclick="showToast('Звоним жильцу')">📞</button>
+  </div>
+
+  <div class="contractor-badge" id="rcBadge">
+    <div class="c-avatar" id="rcAvatar">А</div>
+    <div class="c-info">
+      <div class="c-name" id="rcName">Анна Иванова</div>
+      <div class="c-status" id="rcStatus"><span class="on"></span><span>кв. 312</span></div>
+    </div>
+  </div>
+
+  <div class="chat-wrap" id="rcChatBody"></div>
+  <div class="qr-bar" id="rcQuick"></div>
+
+  <div class="chat-input-bar">
+    <input type="text" id="rcInput" placeholder="Написать жильцу..."
+      onkeypress="if(event.key==='Enter')rcSend()">
+    <button class="send" onclick="rcSend()">➤</button>
+  </div>
+</div>
+
+<!-- ============ КАЛЕНДАРЬ ============ -->
+<div class="screen" id="c-calendar">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="top-bar"><h1>Календарь</h1></div>
+  <div class="content">
+    <div class="filter-tabs" id="calFilters">
+      <button class="active" onclick="filterCalendar(this,'today')">Сегодня</button>
+      <button onclick="filterCalendar(this,'tomorrow')">Завтра</button>
+      <button onclick="filterCalendar(this,'week')">Неделя</button>
+    </div>
+
+    <div id="calToday">
+      <div class="card" style="background:linear-gradient(135deg,#0f3d2e,#1a5a44);color:#fff;margin-bottom:16px">
+        <div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:6px">Сегодня · 14 мая</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:4px">3 задачи</div>
+        <div style="font-size:12px;opacity:.85">1 срочная · 2 обычных</div>
+      </div>
+
+      <div class="cal-day">
+        <div class="cal-time">10:00<br><span style="font-size:10px;color:var(--muted);font-weight:500">30 мин</span></div>
+        <div class="cal-task crit" onclick="openTask('kritichno')">
+          <div class="ct-title">🔴 Протечка · кв. 312</div>
+          <div class="ct-meta">подъезд 3 · 5 этаж</div>
+        </div>
+      </div>
+
+      <div class="cal-day">
+        <div class="cal-time">12:00<br><span style="font-size:10px;color:var(--muted);font-weight:500">2 часа</span></div>
+        <div class="cal-task high" onclick="openTask('light')">
+          <div class="ct-title">🟠 Свет в подъезде №1</div>
+          <div class="ct-meta">подъезд 1 · 3 этаж</div>
+        </div>
+      </div>
+
+      <div class="cal-day">
+        <div class="cal-time">16:00<br><span style="font-size:10px;color:var(--muted);font-weight:500">1 час</span></div>
+        <div class="cal-task" onclick="openTask('door')">
+          <div class="ct-title">🟢 Доводчик · подъезд 4</div>
+          <div class="ct-meta">1 этаж</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="calTomorrow" style="display:none">
+      <div class="card" style="text-align:center;padding:40px 20px">
+        <div style="font-size:36px;margin-bottom:12px">📅</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px">15 мая</div>
+        <div class="meta small">Пока нет задач</div>
+      </div>
+    </div>
+
+    <div id="calWeek" style="display:none">
+      <div class="card" style="margin-bottom:8px"><div class="row between"><div><div style="font-size:14px;font-weight:600">Пн, 13 мая</div><div class="meta small">5 задач · 2 срочных</div></div><div style="font-size:18px">📊</div></div></div>
+      <div class="card" style="margin-bottom:8px"><div class="row between"><div><div style="font-size:14px;font-weight:600">Вт, 14 мая</div><div class="meta small">3 задачи · 1 срочная</div></div><div style="font-size:18px">📊</div></div></div>
+      <div class="card" style="margin-bottom:8px"><div class="row between"><div><div style="font-size:14px;font-weight:600">Ср, 15 мая</div><div class="meta small">Пока нет задач</div></div><div style="font-size:18px">📊</div></div></div>
+      <div class="card" style="margin-bottom:8px"><div class="row between"><div><div style="font-size:14px;font-weight:600">Чт, 16 мая</div><div class="meta small">2 задачи</div></div><div style="font-size:18px">📊</div></div></div>
+      <div class="card"><div class="row between"><div><div style="font-size:14px;font-weight:600">Пт, 17 мая</div><div class="meta small">Пока нет задач</div></div><div style="font-size:18px">📊</div></div></div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab" onclick="showCTab(this,'c-home')"><span class="ti">📋</span><span class="tl">Задачи</span></button>
+    <button class="tab" onclick="showCTab(this,'c-chats')"><span class="ti">💬</span><span class="tl">Чаты</span></button>
+    <button class="tab active" onclick="showCTab(this,'c-calendar')"><span class="ti">📅</span><span class="tl">Календарь</span></button>
+    <button class="tab" onclick="showCTab(this,'c-income')"><span class="ti">💰</span><span class="tl">Доход</span></button>
+    <button class="tab" onclick="showCTab(this,'c-profile')"><span class="ti">👤</span><span class="tl">Профиль</span></button>
+  </div>
+</div><!-- ============ ДОХОД ============ -->
+<div class="screen" id="c-income">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="top-bar"><h1>Доход</h1></div>
+  <div class="content">
+    <div class="income-hero">
+      <div class="label">Заработано в мае</div>
+      <div class="amount">42 600 ₽</div>
+      <div class="delta">↑ 18% к апрелю</div>
+    </div>
+
+    <div class="section-title">Разбивка по категориям</div>
+    <div class="card">
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class="row between" style="margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600">⚡ Электрика</span>
+          <span style="font-weight:700">22 400 ₽</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:53%;background:linear-gradient(90deg,#f87171,#991b1b)"></div></div>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class="row between" style="margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600">🚪 Двери</span>
+          <span style="font-weight:700">8 200 ₽</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:19%;background:linear-gradient(90deg,#fbbf24,#b45309)"></div></div>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class="row between" style="margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600">💡 Освещение</span>
+          <span style="font-weight:700">7 800 ₽</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:18%;background:linear-gradient(90deg,#60a5fa,#1e40af)"></div></div>
+      </div>
+      <div style="padding:8px 0">
+        <div class="row between" style="margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600">🛠 Прочее</span>
+          <span style="font-weight:700">4 200 ₽</span>
+        </div>
+        <div class="progress"><div class="progress-bar" style="width:10%"></div></div>
+      </div>
+    </div>
+
+    <div class="section-title">История выплат</div>
+    <div class="card" style="margin-bottom:8px">
+      <div class="row between">
+        <div><div style="font-size:14px;font-weight:600">Выплата за неделю</div><div class="meta small">8–14 мая</div></div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark)">11 200 ₽</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:8px">
+      <div class="row between">
+        <div><div style="font-size:14px;font-weight:600">Выплата за неделю</div><div class="meta small">1–7 мая</div></div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark)">10 400 ₽</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row between">
+        <div><div style="font-size:14px;font-weight:600">Выплата за неделю</div><div class="meta small">24–30 апр</div></div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark)">9 800 ₽</div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab" onclick="showCTab(this,'c-home')"><span class="ti">📋</span><span class="tl">Задачи</span></button>
+    <button class="tab" onclick="showCTab(this,'c-chats')"><span class="ti">💬</span><span class="tl">Чаты</span></button>
+    <button class="tab" onclick="showCTab(this,'c-calendar')"><span class="ti">📅</span><span class="tl">Календарь</span></button>
+    <button class="tab active" onclick="showCTab(this,'c-income')"><span class="ti">💰</span><span class="tl">Доход</span></button>
+    <button class="tab" onclick="showCTab(this,'c-profile')"><span class="ti">👤</span><span class="tl">Профиль</span></button>
+  </div>
+</div>
+
+<!-- ============ ПРОФИЛЬ ============ -->
+<div class="screen" id="c-profile">
+  <div class="status-bar"><span>9:41</span><span class="right">📶 🔋</span></div>
+  <div class="top-bar"><h1>Профиль</h1></div>
+  <div class="content">
+    <div class="profile-head">
+      <div class="avatar" style="background:linear-gradient(135deg,#2d8b6f,#0f3d2e);width:80px;height:80px;font-size:28px">С</div>
+      <h2>Сергей Петров</h2>
+      <div class="meta">Электрик · 12 лет опыта</div>
+      <div style="display:flex;gap:24px;margin-top:16px">
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--green-dark)">4.9</div>
+          <div class="meta small">Рейтинг</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--green-dark)">96%</div>
+          <div class="meta small">SLA</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--green-dark)">342</div>
+          <div class="meta small">Работ</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Документы</div>
+    <div class="card">
+      <div class="list-row">
+        <div class="icon-circle sm">📋</div>
+        <div class="body"><div class="title">Паспорт и ИНН</div><div class="sub">Проверено ✓</div></div>
+        <span class="badge ok">Активно</span>
+      </div>
+      <div class="list-row">
+        <div class="icon-circle sm">🎓</div>
+        <div class="body"><div class="title">Сертификат электрика</div><div class="sub">Действует до 12.2027</div></div>
+        <span class="badge ok">ОК</span>
+      </div>
+      <div class="list-row">
+        <div class="icon-circle sm">🛡</div>
+        <div class="body"><div class="title">Страховка</div><div class="sub">Покрытие 1 000 000 ₽</div></div>
+        <span class="badge ok">ОК</span>
+      </div>
+      <div class="list-row" onclick="showToast('Открываем реквизиты')">
+        <div class="icon-circle sm">💳</div>
+        <div class="body"><div class="title">Реквизиты выплат</div><div class="sub">•••• 4428</div></div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="section-title">Специализация</div>
+    <div class="card">
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class="row between"><span style="font-size:13px">⚡ Электрика</span><span class="badge ok">Основная</span></div>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class="row between"><span style="font-size:13px">💡 Освещение</span><span class="badge ok">Основная</span></div>
+      </div>
+      <div style="padding:8px 0">
+        <div class="row between"><span style="font-size:13px">🚪 Двери</span><span class="badge gray">Доп.</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Отзывы жителей</div>
+    <div class="card">
+      <div class="review-row">
+        <div class="review-head"><span class="review-name">Анна И.</span><span>⭐⭐⭐⭐⭐</span></div>
+        <div class="review-text">Очень быстрый и вежливый мастер. Всё объяснил, сделал аккуратно.</div>
+      </div>
+      <div class="review-row">
+        <div class="review-head"><span class="review-name">Игорь С.</span><span>⭐⭐⭐⭐⭐</span></div>
+        <div class="review-text">Приехал в течение 30 минут, проблема решена сразу.</div>
+      </div>
+      <div class="review-row">
+        <div class="review-head"><span class="review-name">Марина К.</span><span>⭐⭐⭐⭐⭐</span></div>
+        <div class="review-text">Спасибо! Быстро и профессионально.</div>
+      </div>
+    </div>
+
+    <div class="section-title">Настройки</div>
+    <div class="card">
+      <div class="list-row">
+        <div class="icon-circle sm">🔔</div>
+        <div class="body"><div class="title">Уведомления о задачах</div></div>
+        <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')"></div>
+      </div>
+      <div class="list-row">
+        <div class="icon-circle sm">📍</div>
+        <div class="body"><div class="title">Геолокация</div><div class="sub">Для быстрого выезда</div></div>
+        <div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')"></div>
+      </div>
+      <div class="list-row" onclick="showToast('Открываем настройки')">
+        <div class="icon-circle sm">⚙️</div>
+        <div class="body"><div class="title">Дополнительно</div></div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="section-title">Смена роли</div>
+    <div class="card">
+      <div class="list-row" onclick="switchToRole('resident')">
+        <div class="icon-circle sm">👤</div>
+        <div class="body"><div class="title">Войти как житель</div><div class="sub">Приложение жителя</div></div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="list-row" onclick="switchToRole('uk')">
+        <div class="icon-circle sm">🏢</div>
+        <div class="body"><div class="title">Войти как УК</div><div class="sub">Панель управляющей компании</div></div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <button class="btn btn-outline" style="color:#dc2626;border-color:#fee2e2;margin-top:16px;margin-bottom:24px" onclick="logoutToLogin()">Выйти в выбор роли</button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab" onclick="showCTab(this,'c-home')"><span class="ti">📋</span><span class="tl">Задачи</span></button>
+    <button class="tab" onclick="showCTab(this,'c-chats')"><span class="ti">💬</span><span class="tl">Чаты</span></button>
+    <button class="tab" onclick="showCTab(this,'c-calendar')"><span class="ti">📅</span><span class="tl">Календарь</span></button>
+    <button class="tab" onclick="showCTab(this,'c-income')"><span class="ti">💰</span><span class="tl">Доход</span></button>
+    <button class="tab active" onclick="showCTab(this,'c-profile')"><span class="ti">👤</span><span class="tl">Профиль</span></button>
+  </div>
+</div>
+
+<!-- ============ AI КНОПКА ============ -->
+<button class="ai-fab" onclick="openAIAssistant()" title="AI-ассистент">🤖</button>
+
+<!-- ============ AI МОДАЛКА ============ -->
+<div class="sheet-overlay" id="aiAssistantOverlay" onclick="if(event.target===this)closeAIAssistant()">
+  <div class="sheet" style="max-height:85%;padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:24px 24px 0 0">
+    <div style="padding:20px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#16324a,#2ec4a0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px">🤖</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700">AI-ассистент мастера</div>
+        <div style="font-size:11px;color:var(--muted)">Задачи, доход, советы</div>
+      </div>
+      <button class="back" style="width:30px;height:30px;font-size:14px;background:#fff;border:none;border-radius:50%;cursor:pointer" onclick="closeAIAssistant()">✕</button>
+    </div>
+
+    <div class="chat-wrap" id="assistantBody" style="padding-bottom:16px">
+      <div class="msg ai">
+        <div class="ai-label"><span class="dot"></span>AI-ассистент</div>
+        Здравствуйте! Помогу с задачами, доходом и рейтингом.
+      </div>
+    </div>
+
+    <div class="qr-bar" id="assistantQuick" style="background:#fff;border-top:1px solid var(--border)">
+      <button class="qr" onclick="assistantQuick('Что у меня сегодня?')">Что сегодня?</button>
+      <button class="qr" onclick="assistantQuick('Сколько я заработал?')">Доход</button>
+      <button class="qr" onclick="assistantQuick('Как повысить рейтинг?')">Рейтинг</button>
+      <button class="qr" onclick="assistantQuick('Что взять с собой?')">Что взять?</button>
+    </div>
+
+    <div class="chat-input-bar" style="padding:10px 14px 14px;border-top:none">
+      <input type="text" id="assistantInput" placeholder="Задайте вопрос..."
+        onkeypress="if(event.key==='Enter')assistantSend()">
+      <button class="send" onclick="assistantSend()">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div><!-- /phone-screen -->
+</div><!-- /phone-frame --><script>
+/* ============ ИСПРАВЛЕНИЕ МЕЛКИХ ОШИБОК РАЗМЕТКИ ============ */
+document.addEventListener('DOMContentLoaded', function(){
+  // Исправляем все незакрытые img (на случай если вы скопировали с ошибкой)
+  document.querySelectorAll('img').forEach(function(img){
+    if(img.src && !img.complete){
+      img.onerror = function(){ this.style.display = 'none'; };
+    }
+  });
+});
+
+/* ============ РОЛИ И ЛОГИН ============ */
+var currentRole = 'contractor';
+
+function pickRole(btn, role){
+  document.querySelectorAll('.role-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  currentRole = role;
+  var codes = {resident:'1 2 3 4', uk:'5 6 7 8', contractor:'9 0 1 2'};
+  document.getElementById('accessCode').value = codes[role];
+  updateCodeBoxes(codes[role]);
+}
+
+function updateCodeBoxes(val){
+  var digits = (val || '').replace(/\s/g,'').split('');
+  var boxes = document.querySelectorAll('#s-login .code-box');
+  boxes.forEach(function(b,i){
+    b.textContent = digits[i] || '';
+    b.classList.remove('filled','active');
+    if(digits[i]) b.classList.add('filled');
+  });
+  if(digits.length < 6 && boxes[digits.length]) boxes[digits.length].classList.add('active');
+}
+
+function doLogin(){
+  if(currentRole === 'contractor'){
+    showCTab(document.querySelectorAll('#c-home .tab')[0], 'c-home');
+    showToast('Вход как подрядчик');
+  } else if(currentRole === 'resident'){
+    showToast('Переключаюсь в приложение жителя...');
+    setTimeout(function(){ window.location.href = 'app.html'; }, 800);
+  } else if(currentRole === 'uk'){
+    showToast('Переключаюсь в панель УК...');
+    setTimeout(function(){ window.location.href = 'app.html'; }, 800);
+  }
+}
+
+function logoutToLogin(){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('s-login').classList.add('active');
+  showToast('Вы вышли в выбор роли');
+}
+
+function switchToRole(role){
+  showToast('Переключаюсь...');
+  setTimeout(function(){ window.location.href = 'app.html'; }, 700);
+}
+
+/* ============ ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ ============ */
+function showCTab(btn, id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(id);
+  if(el){
+    el.classList.add('active');
+    var c = el.querySelector('.content') || el.querySelector('div[style*="overflow-y:auto"]');
+    if(c) c.scrollTop = 0;
+  }
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  if(btn && btn.classList) btn.classList.add('active');
+}
+
+function showToast(text){
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+
+function goBackToTasks(){
+  showCTab(document.querySelectorAll('#c-home .tab')[0], 'c-home');
+}
+
+function goBackToChats(){
+  showCTab(document.querySelectorAll('#c-chats .tab')[1], 'c-chats');
+}
+
+/* ============ ФИЛЬТР ЗАДАЧ ============ */
+function filterTasks(btn, status){
+  document.querySelectorAll('#taskFilters button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('#taskList .task-card').forEach(function(card){
+    var s = card.getAttribute('data-status');
+    var show = (status === 'all') || (s === status);
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+/* ============ ОТКРЫТИЕ ЗАДАЧИ ============ */
+var TASKS = {
+  kritichno: {
+    title:'Протечка возле электрощитовой',
+    addr:'кв. 312 · 5 этаж · подъезд 3',
+    priority:'КРИТИЧНО', priorityClass:'danger', sla:'SLA 30 мин',
+    photo:'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&q=70',
+    ai:'Похожая заявка была 14 апреля в этом же подъезде. Возьмите хомуты и уплотнитель. При риске замыкания — обесточьте щиток.'
+  },
+  light: {
+    title:'Не работает свет в подъезде',
+    addr:'подъезд 1 · 3 этаж',
+    priority:'ВЫСОКИЙ', priorityClass:'warn', sla:'SLA 4 часа',
+    photo:'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=600&q=70',
+    ai:'Это 4-е обращение по этому адресу. Возможна проблема в проводке, а не в лампе. Проверьте всю линию освещения.'
+  },
+  door: {
+    title:'Доводчик двери в 4 подъезде',
+    addr:'подъезд 4 · 1 этаж',
+    priority:'СРЕДНИЙ', priorityClass:'', sla:'SLA 24 часа',
+    photo:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=70',
+    ai:'Стандартная замена доводчика. Проверьте крепление и угол открывания двери.'
+  }
+};
+
+function openTask(key){
+  var t = TASKS[key];
+  if(!t){ showToast('Открываю задачу'); return; }
+  var tEl = document.getElementById('taskTitle');
+  var aEl = document.getElementById('taskAddr');
+  var prEl = document.getElementById('taskPriority');
+  var slEl = document.getElementById('taskSla');
+  var phEl = document.getElementById('taskPhoto');
+  var aiEl = document.getElementById('taskAi');
+  if(tEl) tEl.textContent = t.title;
+  if(aEl) aEl.textContent = t.addr;
+  if(prEl){ prEl.textContent = t.priority; prEl.className = 'badge ' + t.priorityClass; }
+  if(slEl) slEl.textContent = t.sla;
+  if(phEl) phEl.src = t.photo;
+  if(aiEl) aiEl.textContent = t.ai;
+  showCTab(null, 'c-task');
+}
+
+function completeTask(){
+  showToast('Работа завершена ✓');
+  setTimeout(function(){ showToast('Житель получил уведомление'); }, 1500);
+  setTimeout(function(){ goBackToTasks(); }, 3000);
+}
+
+/* ============ ФИЛЬТР ЧАТОВ ============ */
+function filterChats(btn, status){
+  document.querySelectorAll('#chatFilters button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('#chatList .chat-row').forEach(function(row){
+    var s = row.getAttribute('data-status');
+    row.style.display = (status === 'all' || s === status) ? '' : 'none';
+  });
+}
+
+/* ============ ЧАТЫ С ЖИЛЬЦАМИ ============ */
+var RESIDENT_CHATS = {
+  kritichno: {
+    name:'Анна Иванова', avatar:'А',
+    sysInfo:'🔴 <b>Заявка №2512</b> · Протечка возле электрощитовой<br>Приоритет: критичный · SLA 30 минут',
+    statusText:'🔴 Критично', statusColor:'#fca5a5',
+    quick:['Уже в пути','Осталось 10 минут','Приехал','Нужен доступ'],
+    history:[
+      {who:'resident', text:'Здравствуйте! Вода капает с потолка возле электрощитовой. Очень страшно — может замкнуть!'},
+      {who:'me', text:'Добрый день! Принял заявку, выезжаю. Постараюсь быть в течение 15 минут.'},
+      {who:'resident', text:'Спасибо! Жду вас. Квартира 312, 5 этаж.'}
+    ]
+  },
+  light: {
+    name:'Анна Иванова', avatar:'А',
+    sysInfo:'🟠 <b>Заявка №2487</b> · Свет в подъезде на 3 этаже<br>Приоритет: высокий · SLA 4 часа',
+    statusText:'🟠 В работе', statusColor:'#fbbf24',
+    quick:['Уже в пути','Буду через час','Нужен доступ к щитку'],
+    history:[
+      {who:'resident', text:'Здравствуйте! Когда будете со светом?'},
+      {who:'me', text:'Добрый день! Планирую быть после 12:00. Проверю щиток.'},
+      {who:'resident', text:'Хорошо, буду дома. Спасибо!'}
+    ]
+  },
+  door: {
+    name:'Игорь Смирнов', avatar:'И',
+    sysInfo:'🔵 <b>Заявка №2485</b> · Доводчик двери в 4 подъезде<br>Приоритет: средний · SLA 24 часа',
+    statusText:'🔵 Новое', statusColor:'#93c5fd',
+    quick:['Принял заявку','Буду в течение дня','Уточните время'],
+    history:[
+      {who:'resident', text:'Добрый день! Дверь в подъезде не закрывается — доводчик сломался.'}
+    ]
+  },
+  done1: {
+    name:'Марина Ковалёва', avatar:'М',
+    sysInfo:'🟢 <b>Заявка №2456</b> · Замена розетки<br>Завершено · 5 ⭐',
+    statusText:'🟢 Завершено', statusColor:'#5ee9c0',
+    quick:['Спасибо за отзыв!','Всегда рад помочь','Обращайтесь!'],
+    history:[
+      {who:'resident', text:'Спасибо за оперативность! Всё работает.'},
+      {who:'me', text:'Рад помочь! Обращайтесь, если что-то ещё нужно.'},
+      {who:'resident', text:'⭐⭐⭐⭐⭐'}
+    ]
+  },
+  done2: {
+    name:'Пётр Сидоров', avatar:'П',
+    sysInfo:'🟢 <b>Заявка №2411</b> · Радиатор отопления<br>Завершено',
+    statusText:'🟢 Завершено', statusColor:'#5ee9c0',
+    quick:['Спасибо!','Обращайтесь'],
+    history:[
+      {who:'resident', text:'Всё работает, спасибо!'}
+    ]
+  }
+};
+
+function openResidentChat(chatKey){
+  var c = RESIDENT_CHATS[chatKey];
+  if(!c){ showToast('Чат открывается'); return; }
+
+  var titleEl = document.getElementById('rcTitle');
+  var avEl = document.getElementById('rcAvatar');
+  var nameEl = document.getElementById('rcName');
+  var stEl = document.getElementById('rcStatus');
+  if(titleEl) titleEl.textContent = c.name;
+  if(avEl) avEl.textContent = c.avatar;
+  if(nameEl) nameEl.textContent = c.name;
+  if(stEl) stEl.innerHTML = '<span class="on"></span><span style="color:' + c.statusColor + ';font-weight:700">' + c.statusText + '</span>';
+
+  var body = document.getElementById('rcChatBody');
+  if(!body){ showToast('Ошибка: чат не найден'); return; }
+  body.innerHTML = '';
+  var sys = document.createElement('div');
+  sys.className = 'chat-sys-info';
+  sys.innerHTML = c.sysInfo;
+  body.appendChild(sys);
+
+  c.history.forEach(function(m, i){
+    setTimeout(function(){
+      var el = document.createElement('div');
+      el.className = 'msg ' + (m.who === 'me' ? 'me' : 'ai');
+      if(m.who === 'me') el.textContent = m.text;
+      else el.innerHTML = '<div class="ai-label"><span class="dot"></span>' + c.name + '</div>' + m.text;
+      body.appendChild(el);
+      body.scrollTop = body.scrollHeight;
+    }, i * 250);
+  });
+
+  var quick = document.getElementById('rcQuick');
+  if(quick){
+    quick.innerHTML = '';
+    c.quick.forEach(function(txt){
+      var b = document.createElement('button');
+      b.className = 'qr';
+      b.textContent = txt;
+      b.onclick = function(){
+        document.getElementById('rcInput').value = txt;
+        rcSend();
+      };
+      quick.appendChild(b);
+    });
+  }
+
+  showCTab(null, 'c-resident-chat');
+}
+
+function rcSend(){
+  var input = document.getElementById('rcInput');
+  if(!input) return;
+  var text = (input.value || '').trim();
+  if(!text) return;
+  var body = document.getElementById('rcChatBody');
+  if(!body) return;
+  var me = document.createElement('div');
+  me.className = 'msg me';
+  me.textContent = text;
+  body.appendChild(me);
+  input.value = '';
+  body.scrollTop = body.scrollHeight;
+
+  setTimeout(function(){
+    var t = document.createElement('div');
+    t.className = 'typing';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    body.appendChild(t);
+    body.scrollTop = body.scrollHeight;
+
+    setTimeout(function(){
+      if(t.parentNode) t.remove();
+      var reply = document.createElement('div');
+      reply.className = 'msg ai';
+      var nameEl = document.getElementById('rcName');
+      var name = nameEl ? nameEl.textContent : 'Жилец';
+      var answers = ['Понял, спасибо!','Хорошо, буду ждать.','Спасибо большое!','Ок, договорились 👍'];
+      var pick = answers[Math.floor(Math.random() * answers.length)];
+      reply.innerHTML = '<div class="ai-label"><span class="dot"></span>' + name + '</div>' + pick;
+      body.appendChild(reply);
+      body.scrollTop = body.scrollHeight;
+    }, 1400);
+  }, 400);
+}
+
+/* ============ КАЛЕНДАРЬ ============ */
+function filterCalendar(btn, period){
+  document.querySelectorAll('#calFilters button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  var today = document.getElementById('calToday');
+  var tomorrow = document.getElementById('calTomorrow');
+  var week = document.getElementById('calWeek');
+  if(today) today.style.display = (period === 'today') ? '' : 'none';
+  if(tomorrow) tomorrow.style.display = (period === 'tomorrow') ? '' : 'none';
+  if(week) week.style.display = (period === 'week') ? '' : 'none';
+}
+
+/* ============ AI-АССИСТЕНТ ============ */
+function openAIAssistant(){
+  var ov = document.getElementById('aiAssistantOverlay');
+  if(ov) ov.classList.add('show');
+}
+function closeAIAssistant(){
+  var ov = document.getElementById('aiAssistantOverlay');
+  if(ov) ov.classList.remove('show');
+}
+
+function assistantQuick(text){
+  var inp = document.getElementById('assistantInput');
+  if(inp) inp.value = text;
+  assistantSend();
+}
+
+function assistantSend(){
+  var input = document.getElementById('assistantInput');
+  if(!input) return;
+  var text = (input.value || '').trim();
+  if(!text) return;
+  input.value = '';
+  var body = document.getElementById('assistantBody');
+  if(!body) return;
+  var me = document.createElement('div');
+  me.className = 'msg me';
+  me.textContent = text;
+  body.appendChild(me);
+  body.scrollTop = body.scrollHeight;
+
+  var t = document.createElement('div');
+  t.className = 'typing';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  body.appendChild(t);
+  body.scrollTop = body.scrollHeight;
+
+  setTimeout(function(){
+    if(t.parentNode) t.remove();
+    var reply = document.createElement('div');
+    reply.className = 'msg ai';
+    reply.innerHTML = '<div class="ai-label"><span class="dot"></span>AI-ассистент</div>' + aiAnswer(text);
+    body.appendChild(reply);
+    body.scrollTop = body.scrollHeight;
+  }, 1000);
+}
+
+function aiAnswer(q){
+  var s = q.toLowerCase();
+  if(s.indexOf('сегодня') >= 0 || s.indexOf('задач') >= 0)
+    return '<b>У вас 3 задачи на сегодня:</b><br>🔴 10:00 — Протечка кв. 312 (срочно)<br>🟠 12:00 — Свет в подъезде №1<br>🟢 16:00 — Доводчик подъезд 4';
+  if(s.indexOf('заработ') >= 0 || s.indexOf('доход') >= 0)
+    return '<b>Доход в мае:</b> 42 600 ₽ (↑ 18% к апрелю)<br>Топ-категория: электрика — 22 400 ₽<br>Следующая выплата: 15 мая';
+  if(s.indexOf('рейтинг') >= 0 || s.indexOf('повыс') >= 0)
+    return '<b>Как повысить рейтинг с 4.9 до 5.0:</b><br>• Сократить отклик до 15 мин<br>• Всегда добавлять фото до/после<br>• Вежливое общение<br>• Закрывать SLA 100%';
+  if(s.indexOf('взять') >= 0 || s.indexOf('с собой') >= 0)
+    return '<b>Для текущей задачи (протечка):</b><br>• Хомуты 2 шт<br>• Уплотнитель<br>• Разводной ключ<br>• Фонарик<br>• Изолента';
+  if(s.indexOf('sla') >= 0 || s.indexOf('срок') >= 0)
+    return '<b>Ваш SLA: 96%</b><br>Среднее время отклика: 18 мин<br>Просрочено за месяц: 2 заявки<br>Целевой SLA: 95%';
+  if(s.indexOf('срочн') >= 0 || s.indexOf('критичн') >= 0)
+    return '<b>Критичная заявка:</b><br>Протечка кв. 312<br>Осталось до SLA: 12 минут<br>📍 Подъезд 3 · 5 этаж';
+  return 'Могу помочь:<br>• <b>Что у меня сегодня?</b><br>• <b>Сколько я заработал?</b><br>• <b>Как повысить рейтинг?</b><br>• <b>Что взять с собой?</b>';
+}
+
+/* ============ INIT ============ */
+document.addEventListener('DOMContentLoaded', function(){
+  var input = document.getElementById('accessCode');
+  if(input) input.addEventListener('input', function(){ updateCodeBoxes(this.value); });
+  updateCodeBoxes('9 0 1 2');
+});
+</script>
+
+</body>
+</html>
